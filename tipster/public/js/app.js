@@ -1,5 +1,5 @@
 /* ============================================
-   TIPSTER - Shared App Utilities
+   EXP Tips Bot - Shared App Utilities
    ============================================ */
 
 // ─── TOAST ───
@@ -83,7 +83,7 @@ function renderNavbar(activeLink) {
   nav.innerHTML = `
     <a href="/portal.html" class="brand">
       <span class="icon">⚡</span>
-      TipMaster
+      EXP Tips Bot
     </a>
     <div class="nav-links">
       <a href="/portal.html" class="${activeLink === 'portal' ? 'active' : ''}">🎯 <span>Tips</span></a>

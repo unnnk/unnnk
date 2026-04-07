@@ -54,6 +54,6 @@ app.get('/dashboard.html', requireAuth, (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Tipster rodando em http://localhost:${PORT}`);
-  console.log(`📋 Login: admin@tipster.com / Admin@123\n`);
+  console.log(`\n🚀 EXP Tips Bot rodando em http://localhost:${PORT}`);
+  console.log(`📋 Login: admin@exptipsbot.com / Admin@123\n`);
 });

@@ -67,7 +67,7 @@ function initSchema() {
     const hash = bcrypt.hashSync('Admin@123', 12);
     db.prepare(`
       INSERT INTO users (username, email, password_hash, role)
-      VALUES ('admin', 'admin@tipster.com', ?, 'admin')
+      VALUES ('admin', 'admin@exptipsbot.com', ?, 'admin')
     `).run(hash);
     console.log('✅ Default admin user created: admin / Admin@123');
   }
