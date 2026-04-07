@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta – TipMaster</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">⚡</div>
+      <h1>TipMaster</h1>
+      <p>Crie sua conta gratuita</p>
+    </div>
+
+    <h2>Nova conta</h2>
+
+    <div id="alert-area"></div>
+
+    <form id="register-form">
+      <div class="form-group">
+        <label>Nome de usuário</label>
+        <input type="text" id="username" placeholder="seunome" required minlength="3">
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="password" placeholder="Mínimo 6 caracteres" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Confirmar Senha</label>
+        <input type="password" id="confirm-password" placeholder="Repita a senha" required>
+      </div>
+      <button type="submit" class="btn btn-gold btn-lg" id="submit-btn">
+        Criar Conta
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:20px;color:var(--text2);font-size:0.9rem;">
+      Já tem conta?
+      <a href="/login.html">Fazer login</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('register-form');
+  const alertArea = document.getElementById('alert-area');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertArea.innerHTML = '';
+
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm-password').value;
+
+    if (password !== confirm) {
+      alertArea.innerHTML = `<div class="alert alert-error">❌ As senhas não coincidem.</div>`;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span style="display:inline-block;width:18px;height:18px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;"></span> Criando...';
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          email: document.getElementById('email').value,
+          password,
+          confirmPassword: confirm
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      alertArea.innerHTML = `<div class="alert alert-success">✅ Conta criada! Redirecionando...</div>`;
+      setTimeout(() => { window.location.href = '/portal.html'; }, 1200);
+    } catch (err) {
+      alertArea.innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Criar Conta';
+    }
+  });
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

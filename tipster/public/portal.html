@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tips do Dia – TipMaster</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<nav class="navbar" id="navbar"></nav>
+
+<div class="page-header" style="padding:24px;">
+  <div class="container">
+    <h1>⚡ Tips de Hoje</h1>
+    <p>Análises e recomendações dos melhores jogos do dia</p>
+  </div>
+</div>
+
+<div class="page-content">
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="pending">⏳ Pendentes</button>
+    <button class="filter-btn" data-filter="resolved">📋 Encerrados</button>
+    <button class="filter-btn" data-filter="Futebol">⚽ Futebol</button>
+    <button class="filter-btn" data-filter="Basquete">🏀 Basquete</button>
+    <button class="filter-btn" data-filter="Tênis">🎾 Tênis</button>
+  </div>
+
+  <!-- Tips list -->
+  <div id="tips-container">
+    <div class="loading-state"><div class="spinner"></div> Carregando tips...</div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let allTips = [];
+let activeFilter = 'all';
+
+async function init() {
+  const user = await loadCurrentUser();
+  if (!user) { window.location.href = '/login.html'; return; }
+  renderNavbar('portal');
+  await loadTips();
+}
+
+async function loadTips() {
+  try {
+    const data = await apiGet('/api/tips');
+    allTips = data.tips;
+    renderTips();
+  } catch (err) {
+    document.getElementById('tips-container').innerHTML = `
+      <div class="alert alert-error">❌ Erro ao carregar tips: ${err.message}</div>`;
+  }
+}
+
+function renderTips() {
+  const container = document.getElementById('tips-container');
+  let tips = allTips;
+
+  if (activeFilter === 'pending') tips = tips.filter(t => t.status === 'pending');
+  else if (activeFilter === 'resolved') tips = tips.filter(t => t.status === 'resolved');
+  else if (activeFilter !== 'all') tips = tips.filter(t => t.sport === activeFilter);
+
+  if (tips.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>Nenhuma tip encontrada</h3>
+        <p>Tente outro filtro ou aguarde novas análises.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="tips-grid">${tips.map(renderTipCard).join('')}</div>`;
+
+  // Attach events
+  container.querySelectorAll('[data-tip-id]').forEach(el => {
+    const tipId = el.dataset.tipId;
+    const gotBtn = el.querySelector('.btn-got');
+    const notGotBtn = el.querySelector('.btn-not-got');
+
+    if (gotBtn) gotBtn.addEventListener('click', () => markTip(tipId, 1, el));
+    if (notGotBtn) notGotBtn.addEventListener('click', () => markTip(tipId, 0, el));
+  });
+}
+
+function renderTipCard(tip) {
+  const resultClass = tip.result === 'won' ? 'won' : tip.result === 'lost' ? 'lost' : 'pending';
+  const userGotIt = tip.user_got_it;
+  const hasMarked = tip.user_result_id !== null;
+
+  const gotActive = hasMarked && userGotIt === 1 ? 'active' : '';
+  const notGotActive = hasMarked && userGotIt === 0 ? 'active' : '';
+
+  return `
+  <div class="tip-card ${resultClass}" data-tip-id="${tip.id}">
+    <div class="tip-header">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="tip-sport-badge">${sportIcon(tip.sport)} ${tip.sport}</span>
+        ${tip.league ? `<span style="color:var(--text2);font-size:0.8rem;">📍 ${tip.league}</span>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        ${statusLabel(tip)}
+        ${tip.match_date ? `<span style="color:var(--text2);font-size:0.8rem;">📅 ${fmtDate(tip.match_date)}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="tip-body">
+      <div class="tip-match">${tip.match_teams}</div>
+      <div class="tip-meta">
+        <span>🏷️ ${tip.tip_type}</span>
+        ${tip.odds ? `<span>📈 Odd: <strong style="color:var(--gold)">${Number(tip.odds).toFixed(2)}</strong></span>` : ''}
+      </div>
+
+      <div class="tip-recommendation">
+        <div class="label">✅ Recomendação</div>
+        <div class="value">${tip.tip_detail}</div>
+      </div>
+
+      <div class="confidence-stars">
+        <span style="font-size:0.8rem;color:var(--text2);margin-right:4px;">Confiança:</span>
+        ${confidenceStars(tip.confidence)}
+      </div>
+
+      ${tip.analysis ? `
+      <div class="tip-analysis">
+        📊 <strong>Análise:</strong><br>
+        ${tip.analysis}
+      </div>` : ''}
+    </div>
+
+    <div class="tip-actions">
+      <div class="mark-section">
+        <span class="mark-label">Conseguiu pegar?</span>
+        <button class="btn-got ${gotActive}" title="Sim, peguei essa tip!">
+          ✅ Sim
+        </button>
+        <button class="btn-not-got ${notGotActive}" title="Não consegui pegar">
+          ❌ Não
+        </button>
+        ${hasMarked ? `
+          <span class="user-mark-chip ${userGotIt === 1 ? 'got' : 'not-got'}">
+            ${userGotIt === 1 ? '✅ Pegou' : '❌ Não pegou'}
+          </span>
+        ` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function markTip(tipId, gotIt, card) {
+  try {
+    await apiPost(`/api/tips/${tipId}/mark`, { got_it: gotIt });
+    showToast(gotIt ? '✅ Marcado como peguei!' : '❌ Marcado como não peguei!', gotIt ? 'success' : 'error');
+    await loadTips();
+  } catch (err) {
+    showToast('Erro ao marcar: ' + err.message, 'error');
+  }
+}
+
+// Filters
+document.getElementById('filters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = btn.dataset.filter;
+  renderTips();
+});
+
+init();
+</script>
+</body>
+</html>

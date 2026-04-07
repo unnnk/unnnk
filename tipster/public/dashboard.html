@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Resultados – TipMaster</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<nav class="navbar" id="navbar"></nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>📊 Meus Resultados</h1>
+    <p>Acompanhe seu histórico de tips e desempenho</p>
+  </div>
+</div>
+
+<div class="page-content">
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="loading-state"><div class="spinner"></div></div>
+  </div>
+
+  <!-- History Table -->
+  <div class="table-wrapper">
+    <div class="table-title">
+      📋 Histórico de Tips
+      <span style="font-size:0.8rem;color:var(--text2);" id="history-count"></span>
+    </div>
+    <div id="history-table">
+      <div class="loading-state"><div class="spinner"></div> Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+async function init() {
+  const user = await loadCurrentUser();
+  if (!user) { window.location.href = '/login.html'; return; }
+  renderNavbar('dashboard');
+  await loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    const data = await apiGet('/api/tips/user/dashboard');
+    renderStats(data.stats);
+    renderHistory(data.history);
+  } catch (err) {
+    document.getElementById('stats-grid').innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
+  }
+}
+
+function renderStats(stats) {
+  const total = stats.total_marked || 0;
+  const got = stats.total_got || 0;
+  const notGot = stats.total_not_got || 0;
+  const rate = total > 0 ? Math.round((got / total) * 100) : 0;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-value">${total}</div>
+      <div class="stat-label">Tips Marcadas</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-value">${got}</div>
+      <div class="stat-label">Peguei ✅</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-value">${notGot}</div>
+      <div class="stat-label">Não Peguei ❌</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-value">${rate}%</div>
+      <div class="stat-label">Taxa de Acerto</div>
+    </div>
+  `;
+}
+
+function renderHistory(history) {
+  document.getElementById('history-count').textContent = `${history.length} registros`;
+
+  if (history.length === 0) {
+    document.getElementById('history-table').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Nenhum histórico ainda</h3>
+        <p>Vá para a aba Tips e marque se conseguiu pegar as apostas.</p>
+        <a href="/portal.html" class="btn btn-primary" style="margin-top:16px;">Ver Tips</a>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('history-table').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Partida</th>
+          <th>Esporte</th>
+          <th>Tip</th>
+          <th>Odd</th>
+          <th>Status Tip</th>
+          <th>Minha Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${history.map(h => `
+          <tr>
+            <td style="color:var(--text2);font-size:0.8rem;">${fmtDate(h.match_date || h.noted_at)}</td>
+            <td><strong>${h.match_teams}</strong></td>
+            <td>${sportIcon(h.sport)} ${h.sport}</td>
+            <td>${h.tip_detail}</td>
+            <td>${h.odds ? `<span style="color:var(--gold);font-weight:700;">${Number(h.odds).toFixed(2)}</span>` : '—'}</td>
+            <td>${statusLabel(h)}</td>
+            <td>
+              <span class="user-mark-chip ${h.got_it === 1 ? 'got' : 'not-got'}">
+                ${h.got_it === 1 ? '✅ Peguei' : '❌ Não Peguei'}
+              </span>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>

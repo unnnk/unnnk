@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – TipMaster</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">⚡</div>
+      <h1>TipMaster</h1>
+      <p>Análises esportivas inteligentes</p>
+    </div>
+
+    <h2>Entrar na conta</h2>
+
+    <div id="alert-area"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+        Entrar
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:20px;color:var(--text2);font-size:0.9rem;">
+      Não tem conta?
+      <a href="/register.html">Criar conta</a>
+    </p>
+
+    <div class="alert alert-info" style="margin-top:24px;font-size:0.82rem;">
+      <span>👤</span>
+      <div>
+        <strong>Admin demo:</strong><br>
+        admin@tipster.com / Admin@123
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('login-form');
+  const alertArea = document.getElementById('alert-area');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertArea.innerHTML = '';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span style="display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;"></span> Entrando...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.user.role === 'admin') {
+        window.location.href = '/admin.html';
+      } else {
+        window.location.href = '/portal.html';
+      }
+    } catch (err) {
+      alertArea.innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Entrar';
+    }
+  });
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>
