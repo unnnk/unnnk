@@ -17,10 +17,10 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// GET all tips (public)
-router.get('/', requireAuth, (req, res) => {
+// GET all tips (public - no auth required)
+router.get('/', (req, res) => {
   const db = getDb();
-  const userId = req.session.user.id;
+  const userId = req.session.user ? req.session.user.id : null;
 
   const tips = db.prepare(`
     SELECT t.*,
@@ -35,7 +35,7 @@ router.get('/', requireAuth, (req, res) => {
 });
 
 // GET single tip
-router.get('/:id', requireAuth, (req, res) => {
+router.get('/:id', (req, res) => {
   const db = getDb();
   const tip = db.prepare('SELECT * FROM tips WHERE id = ?').get(req.params.id);
   if (!tip) return res.status(404).json({ error: 'Tip não encontrada.' });

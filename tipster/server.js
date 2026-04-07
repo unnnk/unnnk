@@ -31,14 +31,10 @@ app.use('/api/tips', require('./src/routes/tips'));
 const { requireAuth, requireAdmin } = require('./src/middleware');
 
 app.get('/', (req, res) => {
-  if (req.session.user) {
-    res.redirect('/portal.html');
-  } else {
-    res.redirect('/login.html');
-  }
+  res.redirect('/portal.html');
 });
 
-app.get('/portal.html', requireAuth, (req, res) => {
+app.get('/portal.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'portal.html'));
 });
 
@@ -46,7 +42,7 @@ app.get('/admin.html', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/dashboard.html', requireAuth, (req, res) => {
+app.get('/dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 

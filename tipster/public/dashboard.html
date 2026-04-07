@@ -39,8 +39,16 @@
 <script>
 async function init() {
   const user = await loadCurrentUser();
-  if (!user) { window.location.href = '/login.html'; return; }
   renderNavbar('dashboard');
+  if (!user) {
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="alert alert-info" style="grid-column:1/-1;">
+        <span>🔒</span>
+        <div>Faça <a href="/login.html">login</a> ou <a href="/register.html">crie uma conta</a> para ver seus resultados.</div>
+      </div>`;
+    document.getElementById('history-table').innerHTML = '';
+    return;
+  }
   await loadDashboard();
 }
 

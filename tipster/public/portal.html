@@ -40,8 +40,7 @@ let allTips = [];
 let activeFilter = 'all';
 
 async function init() {
-  const user = await loadCurrentUser();
-  if (!user) { window.location.href = '/login.html'; return; }
+  await loadCurrentUser();
   renderNavbar('portal');
   await loadTips();
 }

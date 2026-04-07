@@ -58,8 +58,9 @@ let currentUser = null;
 
 async function loadCurrentUser() {
   try {
-    const data = await apiGet('/api/auth/me');
-    currentUser = data.user;
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    const data = await r.json();
+    currentUser = data.user || null;
     return currentUser;
   } catch {
     currentUser = null;
@@ -75,10 +76,22 @@ async function logout() {
 // ─── RENDER NAVBAR ───
 function renderNavbar(activeLink) {
   const nav = document.getElementById('navbar');
-  if (!nav || !currentUser) return;
+  if (!nav) return;
 
-  const isAdmin = currentUser.role === 'admin';
-  const initial = currentUser.username.charAt(0).toUpperCase();
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const initial = currentUser ? currentUser.username.charAt(0).toUpperCase() : '?';
+
+  const userSection = currentUser
+    ? `<div class="nav-user">
+        <div class="avatar">${initial}</div>
+        <span>${currentUser.username}</span>
+        ${isAdmin ? '<span class="badge-admin">Admin</span>' : ''}
+        <button onclick="logout()" class="btn btn-sm btn-outline" style="padding:5px 10px;font-size:0.78rem;">Sair</button>
+      </div>`
+    : `<div class="nav-user">
+        <a href="/login.html" class="btn btn-sm btn-primary" style="padding:5px 14px;font-size:0.82rem;">Entrar</a>
+        <a href="/register.html" class="btn btn-sm btn-outline" style="padding:5px 10px;font-size:0.78rem;">Criar conta</a>
+      </div>`;
 
   nav.innerHTML = `
     <a href="/portal.html" class="brand">
@@ -87,15 +100,10 @@ function renderNavbar(activeLink) {
     </a>
     <div class="nav-links">
       <a href="/portal.html" class="${activeLink === 'portal' ? 'active' : ''}">🎯 <span>Tips</span></a>
-      <a href="/dashboard.html" class="${activeLink === 'dashboard' ? 'active' : ''}">📊 <span>Meus Resultados</span></a>
+      ${currentUser ? `<a href="/dashboard.html" class="${activeLink === 'dashboard' ? 'active' : ''}">📊 <span>Meus Resultados</span></a>` : ''}
       ${isAdmin ? `<a href="/admin.html" class="${activeLink === 'admin' ? 'active' : ''}">⚙️ <span>Admin</span></a>` : ''}
     </div>
-    <div class="nav-user">
-      <div class="avatar">${initial}</div>
-      <span>${currentUser.username}</span>
-      ${isAdmin ? '<span class="badge-admin">Admin</span>' : ''}
-      <button onclick="logout()" class="btn btn-sm btn-outline" style="padding:5px 10px;font-size:0.78rem;">Sair</button>
-    </div>
+    ${userSection}
   `;
 }
 
